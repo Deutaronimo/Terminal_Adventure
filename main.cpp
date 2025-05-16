@@ -7,17 +7,95 @@
 #include<thread>
 #include<chrono>
 
+
 using namespace std;
 
+// Define OS-specific variable for clearing the screen.
+#ifdef _WIN32
+const char OS_CLEAR[] = "cls";
+#else
+const char OS_CLEAR[] = "clear";
+#endif
+
 // World parameters
-const int mapHeight = 256;
-const int mapWidth = 256;
+const int mapHeight = 64;
+const int mapWidth =  64;
 const int mapSize = mapWidth * mapHeight;
 int playerStartPosition = 0;
 int position_x = 0;
 int position_y = 0;
 int position = 0;
 int textPrintSpeed = 125;
+int globalturns = 0;
+unsigned int randomSeed = 0;
+
+char data [] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 4, 4, 4, 4, 4, 4, 4, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 2, 2, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 3, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 5, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 6, 6, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 6, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 6, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1,
+            1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 6, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 6, 6, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 2, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 2, 2, 2, 3, 3, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 3, 3, 4, 4, 4, 3, 4, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 3, 3, 3, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 2, 2, 7, 7, 2, 2, 2, 3, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 6, 6, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 6, 6, 2, 2, 7, 7, 2, 2, 3, 3, 4, 4, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 2, 2, 3, 3, 4, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 7, 7, 2, 3, 3, 4, 4, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 7, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 7, 7, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 7, 2, 2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 7, 7, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 7, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 7, 7, 7, 5, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            };
+
+bool skipTime = false;
 
 unsigned int seed = 0;
 
@@ -25,6 +103,7 @@ unsigned int seed = 0;
 int moveCount = 0;
 int worldPosition = 0;
 const string currentMap = "overworld";
+string worldName = "";
 
 // Viewport screen setup
 const int windowHeight = 14;
@@ -41,6 +120,16 @@ const char enemyShip = 69;
 const char playerIcon = 65;
 const char wall = 35;
 const char town = 84;
+
+// Define the tiles char
+const char waterChar = 0;
+const char grassChar = 1;
+const char forrestChar = 2;
+const char mountainChar = 3;
+const char townChar = 4;
+const char sandChar = 5;
+const char roadChar = 6;
+const char blank = 7;
 
 // unicode graphics
 const string playerIcon2 = "\u263A";
@@ -72,7 +161,7 @@ static void printWithDelay(const string& text)
     cout << endl;
 }
 
-static int getAbsolutePosition(vec2d pos)
+static int getAbsolutePosition(const vec2d pos)
 {
     int answer = pos.x + pos.y * mapWidth;
     return answer;
@@ -92,8 +181,6 @@ static std::string generateNpcName()
         "q'","bla","oo","ob","omn","tyr","mar", "ner", "oryn", "pyr", "quin", "ral", "syth", "thar", "vyn"
 
     };
-
-
 
 
     std::string name;
@@ -116,9 +203,9 @@ static std::string generateNpcName()
 
 static std::string generatePlaceName()
 {
-    std::string firstPart = "";
+    std::string firstPart  = "";
     std::string secondPart = "";
-    std::string fullName = "";
+    std::string fullName   = "";
 
     std::vector<std::string> firstHalf =
     {
@@ -127,8 +214,8 @@ static std::string generatePlaceName()
         "never","under","gloom","mist","shadow",
         "terra","spirit","ether","wind","water",
         "west","east","south","north","wither",
-        "frost","sun","rain","snow","hail",
-        "sayda","bore","over","ara","far",
+        "frost","sun","rain","snow","hail","sullon",
+        "sayda","bore","over","ara","far","chill",
         "mans","hells","heavens","gray","tarn",
         "sutton","earth","moon","star","gala",
         "ashen","earthen","celeste","molten","nether",
@@ -158,7 +245,7 @@ static std::string generatePlaceName()
         "haven","trin","fen","sten","blend",
         "worth","wich","brook","holm","stow",
         "bury","stings","sham","mere","lech",
-        "cairn","fal"
+        "cairn","fal","depth","hill"
     };
 
     int random1 = rand() % firstHalf.size();
@@ -192,7 +279,7 @@ enum Color
 
 };
 
-enum actionState
+enum ActionState
 {
     idle,
     walking,
@@ -216,47 +303,37 @@ struct Entity
     string name = "none";
     string shipName = "none";
     string description = "No description";
-    // Base Stats
-    int hitPoints = 0;
-    int strength = 0;
-    int dexterity = 0;
-    int wisdom = 0;
-    int attack = 0;
-    int defense = 0;
-    int speed = 0;
-    int gold = 0;
-    int xp = 0;
-    int level = 0;
-
     int position = 0;
-    int dammage = 0;
-    int armor = 0;
     char icon = 0;
     bool isAlive = true;
     bool onShip = false;
+    ActionState actionState = idle;
     vec2d mapPosition;
+    int age = 0;
+    int turns = 0;
+    
+    
 };
 
 struct Tile
 {
 
     vec2d mapPosition;
-    int teleportDestination = 0;
-    int teleportSource = 0;
-    int TeleportExit = 0;
     int absolutePosiiton = 0;
     string name = "none";
     string type = "none";
+    string groupName = "none";
+    string continentName = "none";
     string description = "No description";
     char graphic = 65;
     bool isPassible = true;
     Color color;
     char* map; //map that the tile occupies.
-
+    vector<Entity*>entities;
 };
 
 Tile* overWorldMap[mapSize];
-
+char overWorldMapData[mapSize];
 
 static void setTextColor(Color _color)
 {
@@ -382,25 +459,25 @@ static bool moveCheck(Direction _direction, int _position)
 
 static void populatePlaces()
 {
-    int randomTownCount = 20;
+    int randomTownCount = 15;
 
-
+    // this is test data...
     // Create 20 random towns and place them on the map within an x and y of 100
     // Dont generate if its in the border area..
 
     for (int x = 0; x < randomTownCount; x++)
     {
 
-        int ran_x = 15 + rand() % 100;
-        int ran_y = 6 + rand() % 100;
-
+        int ran_x = 15 + rand() % 10;
+        int ran_y = 6  + rand() % 10;
 
         vec2d spot = { ran_x, ran_y, 0 };
         Tile* place = new Tile;
         place->name = generatePlaceName();
         place->type = "town";
         place->color = yellow;
-        place->description = "A cozy small town, inhabitted by a small group of close residents.";
+        place->continentName = worldName;
+        place->description = "The " + place->type + " of " + place->name;
         place->mapPosition = spot;
         place->graphic = town;
         place->absolutePosiiton = getAbsolutePosition(place->mapPosition);
@@ -451,31 +528,33 @@ static void drawScreen()
         cout << endl;
 
     }
-    cout << "Location X:" << position_x + 15 << " Y:" << position_y + 7 << " Tile position: " << windowPosition
-        << " Name: " << overWorldMap[windowPosition]->name << endl;
+    //cout << "Location X:" << position_x + 15 << " Y:" << position_y + 7 << " Tile position: " << windowPosition
+    //<< " Name: " << overWorldMap[windowPosition]->name << endl;
 }
 
 static void loadWorld(string type)
 {
-
+       
     // fill the map with tiles.
     for (int y = 0; y < mapHeight; y++)
     {
         for (int x = 0; x < mapWidth; x++)
         {
-
             if (x < 14 || x > mapWidth - windowWidth || y < 6 || y > mapHeight - windowHeight)
             {
-                vec2d pos = { x,y,0 };
+                
                 Tile* tile = new Tile;
-
+                //vec2d pos = { x,y,0 };
                 tile->mapPosition = { x,y,0 };
-                tile->type = "water";
+                tile->type = "sea";
                 tile->graphic = water;
-                tile->description = "water";
+                tile->groupName = generateNpcName();
+                tile->continentName = worldName;
+                tile->description = "The " + tile->type + " of " + tile->groupName;;
                 tile->isPassible = false;
                 tile->color = blue;
                 tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
+                
                 overWorldMap[tile->absolutePosiiton] = tile;
             }
 
@@ -487,15 +566,75 @@ static void loadWorld(string type)
                 tile->mapPosition = { x,y,0 };
                 tile->type = "grassland";
                 tile->name = "field";
-                tile->graphic = grass;
+                tile->groupName = "grassland";
+                tile->continentName = worldName;
                 tile->description = "a typical grass area";
                 tile->isPassible = true;
                 tile->color = green;
+                                
+                // Make grass 1 of 3 different graphics.
+                char grassIcon = 0;
+                int randomChoice = 0;
+                randomChoice = rand() % 2;
+                
+                switch (randomChoice)
+                {
+                case 0:
+                    grassIcon = 39;
+                    break;
+                case 1:
+                    grassIcon = 44;
+
+                case 2:
+                    grassIcon = 46;
+                    break;
+                }
+
+                tile->graphic = grassIcon;
+
                 tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
                 overWorldMap[tile->absolutePosiiton] = tile;
             }
         }
     }
+    vec2d pos = { 20,10,0 };
+    Tile* tile = new Tile;
+    tile->continentName = worldName;
+    tile->mapPosition = pos;
+    tile->name = "none";
+    tile->groupName = generateNpcName();
+    tile->type = "desert";
+    tile->graphic = 46;
+    tile->description = "The " + tile->type + " of " + tile->groupName;
+    tile->isPassible = true;
+    tile->color = yellow;
+    tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
+    overWorldMap[tile->absolutePosiiton] = tile; 
+}
+
+static void createWorld()
+{
+    // Create tiles from world data 
+    // then put them in world tile array.
+    for (int y = 0; y < mapHeight; y++)
+    {
+        for (int x = 0; x < mapWidth; x++)
+        {
+            Tile* tile = new Tile;
+            vec2d location = {x,y,0};
+            int absolutePosition = getAbsolutePosition(location);
+            // take data and call create tile for it, this will fill
+            // the tile data in for that type tile.
+            // this will keep the size of this function down and focussed, 
+            // also making it easier to code each tile type
+            
+            // if dataArray[absolutePosition] == grassIcon
+            //      createGrassTile(Tile* tile) // for grass
+            
+            
+        }  
+    }
+    
 }
 
 static void showMapIcons()
@@ -505,7 +644,7 @@ static void showMapIcons()
 
 static void moveMenu()
 {
-
+    skipTime = false;
     string choice = "none";
     cout << "______Action_____" << endl;
     cout << " Move  : N S E W " << endl;
@@ -520,9 +659,8 @@ static void moveMenu()
 
     if (choice == "")
     {
-        system("clear");
-        drawScreen();
-        moveMenu();
+        skipTime = true;
+
     }
 
 
@@ -565,8 +703,8 @@ static void moveMenu()
     if (choice == "icons")
     {
         showMapIcons();
+        skipTime = true;
     }
-
 
     if (choice == "q")
     {
@@ -575,15 +713,23 @@ static void moveMenu()
 
     if (choice == "l")
     {
+        skipTime = true;
         int tempPos = windowPosition + 14 + mapWidth * 6;
-        cout << "You are at a " << overWorldMap[tempPos]->type << " named " << overWorldMap[tempPos]->name << ".\n" << overWorldMap[tempPos]->description << endl;
+        cout << "Continent: " << overWorldMap[tempPos]->continentName << endl;
+        cout << "Type: "      << overWorldMap[tempPos]->type << endl;
+        cout << "Group Name: "<< overWorldMap[tempPos]->groupName << endl;
+        cout << "Name: "      << overWorldMap[tempPos]->name << endl;
+        cout << "Desc: "      << overWorldMap[tempPos]->description << endl;
+        cout << "Turn#: "     << globalturns << endl;
+        
     }
-
+    
+    
 }
 
 static void titleScreen()
 {
-    system("clear");
+    system(OS_CLEAR);
     string x;
 
     setTextColor(red);
@@ -617,17 +763,28 @@ static void playerCreation()
     cout << "Let me get this right, " << player->name << " is the captain of " << player->shipName << " ?" << endl;
     cout << " Y/N : ";
     cin >> choice;
-    system("clear");
+    system(OS_CLEAR);
 
+}
+
+static void cleanUp()
+{
+    for (auto Tile : overWorldMap)
+    {
+       //delete Tile;
+       //delete [] overWorldMap;
+    }
 }
 
 int main()
 {
-    // ______Setup_______
     // Randomize the randomizer
-    srand(static_cast<unsigned int>(time(nullptr)));
-    //srand(static_cast<unsigned int>(seed));
+    randomSeed = static_cast<unsigned int>(time(nullptr));
+    srand(randomSeed);
 
+    // Generate importanat names.
+    worldName = generateNpcName();
+    
     // load some generated test map tiles.
     loadWorld("test");
 
@@ -643,10 +800,16 @@ int main()
     //Main loop
     while (isRunning)
     {
-        //system("clear");
+        //system(OS_CLEAR);
         drawScreen();
         moveMenu();
+        
+        // increment the global turn counter.
+        if (skipTime == false){ globalturns++;}
+        
     }
+
+    //cleanUp();
 
     return 0;
 }

@@ -7,110 +7,27 @@
 #include<thread>
 #include<chrono>
 
-
 using namespace std;
 
-// Define OS-specific variable for clearing the screen.
+// Define OS-specific command for clearing the screen.
 #ifdef _WIN32
 const char OS_CLEAR[] = "cls";
 #else
 const char OS_CLEAR[] = "clear";
 #endif
 
-// World parameters
-const int mapHeight = 64;
-const int mapWidth =  64;
-const int mapSize = mapWidth * mapHeight;
-int playerStartPosition = 0;
-int position_x = 0;
-int position_y = 0;
-int position = 0;
 int textPrintSpeed = 125;
 int globalturns = 0;
 unsigned int randomSeed = 0;
-
-char data [] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 4, 4, 4, 4, 4, 4, 4, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 2, 2, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 3, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 5, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 6, 6, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 6, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 7, 2, 2, 2, 2, 6, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1, 1,
-            1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 6, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 6, 6, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 2, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 2, 2, 2, 3, 3, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 2, 2, 6, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 3, 3, 2, 2, 2, 6, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 7, 2, 2, 2, 3, 3, 4, 4, 4, 3, 4, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 3, 3, 3, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 2, 2, 7, 7, 2, 2, 2, 3, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 6, 6, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 6, 6, 2, 2, 7, 7, 2, 2, 3, 3, 4, 4, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 2, 2, 3, 3, 4, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 7, 7, 2, 3, 3, 4, 4, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 7, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 7, 7, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 7, 2, 2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 7, 7, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 7, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 7, 2, 2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 7, 7, 7, 5, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            };
+unsigned int seed = 69;
 
 bool skipTime = false;
-
-unsigned int seed = 0;
+bool isRunning = true;
+bool printDebugData = true;
 
 // Recorded stats
 int moveCount = 0;
-int worldPosition = 0;
-const string currentMap = "overworld";
 string worldName = "";
-
-// Viewport screen setup
-const int windowHeight = 14;
-const int windowWidth = 32;
-const int windowSize = windowHeight * windowWidth;
-int windowPosition = 0;
-int windowCenter = windowWidth / 2 + (windowHeight / 2) * windowWidth;
 
 // Define graphic ASCII tiles
 const char water = 126;
@@ -120,16 +37,6 @@ const char enemyShip = 69;
 const char playerIcon = 65;
 const char wall = 35;
 const char town = 84;
-
-// Define the tiles char
-const char waterChar = 0;
-const char grassChar = 1;
-const char forrestChar = 2;
-const char mountainChar = 3;
-const char townChar = 4;
-const char sandChar = 5;
-const char roadChar = 6;
-const char blank = 7;
 
 // unicode graphics
 const string playerIcon2 = "\u263A";
@@ -148,8 +55,24 @@ struct vec2d
 {
     int x = 0;
     int y = 0;
-    int p = 0;
+    int z = 0;
 };
+
+// the position of the window on the world map.
+vec2d windowPosition = {0,0,0};
+
+// where the player starts in the world map.
+vec2d playerStartPosition = {0,0,0};
+
+// the position of the player on the window.
+vec2d playerWindowPosition = {14,6,0};
+
+//the players position on the world map
+vec2d playerPosition = {0,0,0};
+
+//these define the sizes of the world and view window.
+constexpr vec2d windowSize = {32,16,0};
+constexpr vec2d mapSize    = {256,256,0};
 
 static void printWithDelay(const string& text)
 {
@@ -163,7 +86,16 @@ static void printWithDelay(const string& text)
 
 static int getAbsolutePosition(const vec2d pos)
 {
-    int answer = pos.x + pos.y * mapWidth;
+    int answer = pos.x + pos.y * mapSize.x;
+    return answer;
+}
+
+vec2d addVec2d(vec2d first, vec2d second)
+{
+    vec2d answer;
+    answer.x = first.x + second.x;
+    answer.y = first.y + second.y;
+    answer.z = 0;
     return answer;
 }
 
@@ -292,27 +224,21 @@ enum ActionState
 Direction direction;
 Color textColor;
 
-bool canMove = true;
-bool isRunning = true;
-
-char world[mapSize];
-char window[windowSize];
+char world[mapSize.x * mapSize.y];
+char window[windowSize.x * windowSize.y];  
 
 struct Entity
 {
-    string name = "none";
+    string firstName = "none";
+    string lastName = "none";
     string shipName = "none";
     string description = "No description";
-    int position = 0;
     char icon = 0;
     bool isAlive = true;
-    bool onShip = false;
     ActionState actionState = idle;
     vec2d mapPosition;
     int age = 0;
     int turns = 0;
-    
-    
 };
 
 struct Tile
@@ -332,8 +258,13 @@ struct Tile
     vector<Entity*>entities;
 };
 
-Tile* overWorldMap[mapSize];
-char overWorldMapData[mapSize];
+// This will hold a pointer to the current map being used.
+Tile** currentMap = nullptr;
+
+Tile* overWorldMap[mapSize.x * mapSize.y];
+Tile* iceWorldMap[mapSize.x  * mapSize.y];
+
+char overWorldMapData[mapSize.x * mapSize.y];
 
 static void setTextColor(Color _color)
 {
@@ -375,91 +306,96 @@ static void setTextColor(Color _color)
     }
 }
 
-static bool moveCheck(Direction _direction, int _position)
+static bool moveWindowCheck(Direction _direction, const vec2d _windowPosition)
 {
-    bool borderCheckOk = false;
-    bool noCollision = false;
-
+    
     if (_direction == NORTH)
     {
-
-        if (position_y - 1 < 0)
+        if (_windowPosition.y - 1 < 0)
         {
-            borderCheckOk = false;
-
-
+            return false;
         }
-        else
-        {
-            position_y--;
-            borderCheckOk = true;
-        }
-
     }
-
+    
     if (_direction == SOUTH)
     {
-
-        if (position_y + 1 > mapHeight - windowHeight)
+        if (_windowPosition.y + 1 > mapSize.y - windowSize.y)
         {
-            borderCheckOk = false;
-
-
-        }
-        else
-        {
-            position_y++;
-            borderCheckOk = true;
+            return false;
         }
     }
-
-    if (_direction == EAST)
-    {
-
-        if (position_x + 1 > mapWidth - windowWidth)
-        {
-            borderCheckOk = false;
-
-        }
-        else
-        {
-            position_x++;
-            borderCheckOk = true;
-        }
-
-    }
-
+    
     if (_direction == WEST)
     {
-
-        if (position_x - 1 < 0)
+        if (_windowPosition.x - 1 < 0)
         {
-            borderCheckOk = false;
             return false;
-
-        }
-        else
-        {
-            position_x--;
-            borderCheckOk = true;
         }
     }
-
-    noCollision = true; // temporary until collision check is made.
-
-    // After border check is ok and no collisions, move player.
-    if (borderCheckOk == true && noCollision == true)
+    
+    if (_direction == EAST)
     {
-        return true;
+        if (_windowPosition.x + 1 > mapSize.x - windowSize.x )
+        {
+            return false;
+        }
     }
+    
+    return true;
 
-    else
-        return false;
 }
 
-static void populatePlaces()
+static bool movePlayerCheck(Direction _direction, const vec2d _playerPosition)
 {
-    int randomTownCount = 15;
+
+    int checkPosition = 0;
+    
+    if (_direction == SOUTH)
+    {
+        checkPosition = getAbsolutePosition(_playerPosition) + mapSize.x;
+        if (currentMap[checkPosition]->isPassible == false)
+        {
+            return false;
+        }
+        
+    }
+    
+    if (_direction == NORTH)
+    {
+        checkPosition = getAbsolutePosition(_playerPosition) - mapSize.x;
+        if (currentMap[checkPosition]->isPassible == false)
+        {
+            return false;
+        }
+        
+    }
+    
+    if (_direction == EAST)
+    {
+        checkPosition = getAbsolutePosition(_playerPosition)+1;
+        if (currentMap[checkPosition]->isPassible == false)
+        {
+            return false;
+        }
+        
+    } 
+    
+    if (_direction == WEST)
+    {
+        checkPosition = getAbsolutePosition(_playerPosition)-1;
+        if (currentMap[checkPosition]->isPassible == false)
+        {
+            return false;
+        }
+        
+    } 
+    
+    return true;
+}
+
+static void populateOverWorldPlaces()
+{
+    int randomTownCount = 100;
 
     // this is test data...
     // Create 20 random towns and place them on the map within an x and y of 100
@@ -468,8 +404,8 @@ static void populatePlaces()
     for (int x = 0; x < randomTownCount; x++)
     {
 
-        int ran_x = 15 + rand() % 10;
-        int ran_y = 6  + rand() % 10;
+        int ran_x = 15 + rand() % 100;
+        int ran_y = 6  + rand() % 100;
 
         vec2d spot = { ran_x, ran_y, 0 };
         Tile* place = new Tile;
@@ -477,7 +413,7 @@ static void populatePlaces()
         place->type = "town";
         place->color = yellow;
         place->continentName = worldName;
-        place->description = "The " + place->type + " of " + place->name;
+        place->description = "A cozy small town, inhabitted by a small group of close residents named " + place->name;
         place->mapPosition = spot;
         place->graphic = town;
         place->absolutePosiiton = getAbsolutePosition(place->mapPosition);
@@ -492,19 +428,19 @@ static void populatePlaces()
 
 static void drawScreen()
 {
-
+    
     bool isPlayer = false;
 
-    for (int y = 0; y < windowHeight; y++)
+
+    for (int y = 0; y < windowSize.y; y++)
     {
-        for (int x = 0; x < windowWidth; x++)
+        for (int x = 0; x < windowSize.x; x++)
         {
 
-            int position = windowPosition + x + (y * mapWidth);
-            // do a place check here
-
+            int position = windowPosition.x + x + ((windowPosition.y + y) * mapSize.x);
+            
             // If draw is center of window draw the player.
-            if (y == 6 && x == 14)
+            if (y == playerWindowPosition.y && x == playerWindowPosition.x)
             {
                 setTextColor(yellow);
                 cout << playerIcon2;
@@ -514,10 +450,8 @@ static void drawScreen()
             if (!isPlayer)
             {
                 // Draw the current char tile.
-                //cout << world[position];
-                setTextColor(overWorldMap[position]->color);
-                cout << overWorldMap[position]->graphic;
-
+                setTextColor(currentMap[position]->color);
+                cout << currentMap[position]->graphic;
 
                 // Reset text to white.
                 setTextColor(white);
@@ -528,29 +462,104 @@ static void drawScreen()
         cout << endl;
 
     }
-    //cout << "Location X:" << position_x + 15 << " Y:" << position_y + 7 << " Tile position: " << windowPosition
-    //<< " Name: " << overWorldMap[windowPosition]->name << endl;
+    
+    if (printDebugData)
+    {
+        vec2d temp = addVec2d(windowPosition,playerWindowPosition);
+        cout << "Player xy: " << playerWindowPosition.x << ", " << playerWindowPosition.y << endl;
+        cout << "Window xy: " << windowPosition.x << ", " << windowPosition.y << endl;
+        cout << "plyrABS  : "   << getAbsolutePosition(temp) << endl;
+        cout << "windwABS : "  << getAbsolutePosition(windowPosition) << endl;
+    }
+    
+}
+
+static void loadIceWorld()
+{
+     // fill the map with tiles.
+    for (int y = 0; y < mapSize.y; y++)
+    {
+        for (int x = 0; x < mapSize.x; x++)
+        {
+            if (x < 14 || x > mapSize.x - windowSize.x || y < 6 || y > mapSize.y - windowSize.y)
+            {
+                
+                Tile* tile = new Tile;
+                tile->mapPosition = { x,y,0 };
+                tile->type = "Ice";
+                tile->graphic = '#';
+                tile->groupName = generateNpcName() + " Ice wall.";
+                tile->continentName = worldName;
+                tile->description = "a megalithisly large ice wall.";
+                tile->name = tile->groupName;
+                tile->isPassible = false;
+                tile->color = blue;
+                tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
+                
+                iceWorldMap[tile->absolutePosiiton] = tile;
+            }
+            
+            else
+            {
+                vec2d pos = { x,y,0 };
+                Tile* tile = new Tile;
+
+                tile->mapPosition = { x,y,0 };
+                tile->type = "tundra";
+                tile->name = "unnamed";
+                tile->groupName = "snow";
+                tile->continentName = worldName;
+                tile->description = "a snowy field";
+                tile->isPassible = true;
+                tile->color = white;
+                tile->continentName = worldName;
+                
+                // Make grass 1 of 3 different graphics.
+                char grassIcon = 0;
+                int randomChoice = 0;
+                randomChoice = rand() % 2;
+                
+                switch (randomChoice)
+                {
+                case 0:
+                    grassIcon = 39;
+                    break;
+                case 1:
+                    grassIcon = 44;
+
+                case 2:
+                    grassIcon = 46;
+                    break;
+                }
+
+                tile->graphic = grassIcon;
+
+                tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
+                iceWorldMap[tile->absolutePosiiton] = tile;
+            }
+        }
+    }
 }
 
 static void loadWorld(string type)
 {
-       
     // fill the map with tiles.
-    for (int y = 0; y < mapHeight; y++)
+    string oceanName = generateNpcName();
+    for (int y = 0; y < mapSize.y; y++)
     {
-        for (int x = 0; x < mapWidth; x++)
+        for (int x = 0; x < mapSize.x; x++)
         {
-            if (x < 14 || x > mapWidth - windowWidth || y < 6 || y > mapHeight - windowHeight)
+            if (x < 14 || x > mapSize.x - windowSize.x || y < 6 || y > mapSize.y - windowSize.y)
             {
                 
                 Tile* tile = new Tile;
-                //vec2d pos = { x,y,0 };
                 tile->mapPosition = { x,y,0 };
                 tile->type = "sea";
                 tile->graphic = water;
-                tile->groupName = generateNpcName();
+                tile->groupName = oceanName + " Sea";
                 tile->continentName = worldName;
-                tile->description = "The " + tile->type + " of " + tile->groupName;;
+                tile->description = "a blue green ocean";
+                tile->name = tile->groupName;
                 tile->isPassible = false;
                 tile->color = blue;
                 tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
@@ -565,13 +574,14 @@ static void loadWorld(string type)
 
                 tile->mapPosition = { x,y,0 };
                 tile->type = "grassland";
-                tile->name = "field";
+                tile->name = "unnamed";
                 tile->groupName = "grassland";
                 tile->continentName = worldName;
-                tile->description = "a typical grass area";
+                tile->description = "a grass area";
                 tile->isPassible = true;
                 tile->color = green;
-                                
+                tile->continentName = worldName;
+                
                 // Make grass 1 of 3 different graphics.
                 char grassIcon = 0;
                 int randomChoice = 0;
@@ -596,6 +606,7 @@ static void loadWorld(string type)
                 overWorldMap[tile->absolutePosiiton] = tile;
             }
         }
+        
     }
     vec2d pos = { 20,10,0 };
     Tile* tile = new Tile;
@@ -603,22 +614,25 @@ static void loadWorld(string type)
     tile->mapPosition = pos;
     tile->name = "none";
     tile->groupName = generateNpcName();
-    tile->type = "desert";
-    tile->graphic = 46;
-    tile->description = "The " + tile->type + " of " + tile->groupName;
-    tile->isPassible = true;
-    tile->color = yellow;
+    tile->type = "lava";
+    tile->graphic = 35;
+    tile->description = "boiling lava pool";
+    tile->isPassible = false;
+    tile->color = red;
     tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
     overWorldMap[tile->absolutePosiiton] = tile; 
+    
+    // Put in all the special places on the overworld.
+    populateOverWorldPlaces();
 }
 
 static void createWorld()
 {
     // Create tiles from world data 
     // then put them in world tile array.
-    for (int y = 0; y < mapHeight; y++)
+    for (int y = 0; y < mapSize.y; y++)
     {
-        for (int x = 0; x < mapWidth; x++)
+        for (int x = 0; x < mapSize.x; x++)
         {
             Tile* tile = new Tile;
             vec2d location = {x,y,0};
@@ -637,17 +651,14 @@ static void createWorld()
     
 }
 
-static void showMapIcons()
-{
-
-}
-
 static void moveMenu()
 {
+    playerPosition = addVec2d(windowPosition, playerWindowPosition);
     skipTime = false;
     string choice = "none";
     cout << "______Action_____" << endl;
-    cout << " Move  : N S E W " << endl;
+    cout << " Move  : N E S W " << endl;
+    cout << " Peer  : 1 2 3 4 " << endl;
     cout << " Status:  " << endl;
     cout << " Look  : L" << endl;
     cout << " Menu  : " << endl;
@@ -660,49 +671,72 @@ static void moveMenu()
     if (choice == "")
     {
         skipTime = true;
-
     }
 
-
-    if (choice == "s")
-    {
-
-        if (moveCheck(SOUTH, windowPosition))
-        {
-            windowPosition = windowPosition + mapWidth;
-        }
-    }
-
-
+    // move for north, all moves are checked the same way.
     if (choice == "n")
     {
-        if (moveCheck(NORTH, windowPosition))
+        // First check if window can be moved.
+        if(moveWindowCheck(NORTH , windowPosition))
         {
-            windowPosition = windowPosition - mapWidth;
+            // second see the next space if blocked
+            if (movePlayerCheck(NORTH , playerPosition))
+            {
+                // if move is possible, move the screen and player. 
+                windowPosition.y -= 1;
+                
+            }
         }
+        
     }
-
-
+    
+    if (choice == "s")
+    {
+        
+        if(moveWindowCheck(SOUTH , windowPosition))
+        {
+            if (movePlayerCheck(SOUTH , playerPosition))
+            {
+                //adjust the actual positions of both
+                windowPosition.y += 1;
+                
+            }
+        }
+        
+    }
+    
     if (choice == "e")
     {
-        if (moveCheck(EAST, windowPosition))
+        
+        if(moveWindowCheck(EAST , windowPosition))
         {
-            windowPosition = windowPosition + 1;
+            if (movePlayerCheck(EAST , playerPosition))
+            {
+                //adjust the actual positions of both
+                windowPosition.x += 1;
+                
+            }
         }
+        
     }
-
-
+    
     if (choice == "w")
     {
-        if (moveCheck(WEST, windowPosition))
+        
+        if(moveWindowCheck(WEST , windowPosition))
         {
-            windowPosition = windowPosition - 1;
+            if (movePlayerCheck(WEST , playerPosition))
+            {
+                //adjust the actual positions of both
+                windowPosition.x -= 1;
+                
+            }
         }
+        
     }
 
     if (choice == "icons")
     {
-        showMapIcons();
         skipTime = true;
     }
 
@@ -713,17 +747,59 @@ static void moveMenu()
 
     if (choice == "l")
     {
-        skipTime = true;
-        int tempPos = windowPosition + 14 + mapWidth * 6;
-        cout << "Continent: " << overWorldMap[tempPos]->continentName << endl;
-        cout << "Type: "      << overWorldMap[tempPos]->type << endl;
-        cout << "Group Name: "<< overWorldMap[tempPos]->groupName << endl;
-        cout << "Name: "      << overWorldMap[tempPos]->name << endl;
-        cout << "Desc: "      << overWorldMap[tempPos]->description << endl;
+        //skipTime = true;
+        int tempPlayerPos = getAbsolutePosition(playerPosition);
+        cout << "Continent: " << currentMap[tempPlayerPos]->continentName << endl;
+        cout << "Type: "      << currentMap[tempPlayerPos]->type << endl;
+        cout << "Group Name: "<< currentMap[tempPlayerPos]->groupName << endl;
+        cout << "Name: "      << currentMap[tempPlayerPos]->name << endl;
+        cout << "Desc: "      << currentMap[tempPlayerPos]->description << endl;
         cout << "Turn#: "     << globalturns << endl;
         
     }
     
+    if (choice == "1")
+    {
+        int tempPos = getAbsolutePosition(playerPosition)-mapSize.x;
+        cout << "You look to the north and see..." << endl;
+        cout << currentMap[tempPos]->description << " named " << currentMap[tempPos]->name << endl;
+    }
+    
+    if (choice == "2")
+    {
+        int tempPos = getAbsolutePosition(playerPosition)+1;
+        cout << "You look to the east and see..." << endl;
+        cout << currentMap[tempPos]->description << " named " << currentMap[tempPos]->name << endl;
+    }
+    
+    if (choice == "3")
+    {
+        int tempPos = getAbsolutePosition(playerPosition) + mapSize.x;
+        cout << "You look to the south and see..." << endl;
+        cout << currentMap[tempPos]->description << " named " << currentMap[tempPos]->name << endl;
+    }
+    
+    if (choice == "4")
+    {
+        int tempPos = getAbsolutePosition(playerPosition) - 1;
+        cout << "You look to the west and see..." << endl;
+        cout << currentMap[tempPos]->description <<  " named " << currentMap[tempPos]->name << endl;
+    }  
+    
+    if (choice == "0")
+    {
+        printDebugData = !printDebugData;
+    }
+    
+    if (choice == "8")
+    {
+        currentMap = overWorldMap;
+    }
+    
+    if (choice == "9")
+    {
+        currentMap = iceWorldMap;
+    }
     
 }
 
@@ -754,13 +830,14 @@ static void playerCreation()
     string choice;
     player->icon = playerIcon;
     cout << "_______Character Creation________" << endl;
-    cout << " Pick your name: ";
-    cin.ignore();
-    getline(cin, player->name);
-    cout << "Ok " << player->name << " what is the name of your ship? ";
-    cin.ignore();
-    getline(cin, player->shipName);
-    cout << "Let me get this right, " << player->name << " is the captain of " << player->shipName << " ?" << endl;
+    cout << " Pick your first name: ";
+    //cin.ignore();
+    getline(cin, player->firstName);
+    cout << "Ok, so your name is " << player->firstName << endl;
+    cout << "What is your last name?" << endl;
+    //cin.ignore();
+    getline(cin, player->lastName);
+    cout << "Your full name is " << player->firstName << " " << player->lastName << endl;
     cout << " Y/N : ";
     cin >> choice;
     system(OS_CLEAR);
@@ -780,16 +857,19 @@ int main()
 {
     // Randomize the randomizer
     randomSeed = static_cast<unsigned int>(time(nullptr));
-    srand(randomSeed);
-
+    srand(seed);
+    
     // Generate importanat names.
     worldName = generateNpcName();
     
     // load some generated test map tiles.
     loadWorld("test");
+    
+    //ice world test map, for testing map switch.
+    loadIceWorld();
 
     // Load in some specific tiles.
-    populatePlaces();
+    //populatePlaces();
 
     // Diplay title screen.
     //titleScreen();
@@ -797,7 +877,9 @@ int main()
     // Player creation.
     //playerCreation();
 
-    //Main loop
+   // currentMap = the overworld to start
+    currentMap = overWorldMap;
+    
     while (isRunning)
     {
         //system(OS_CLEAR);
@@ -809,7 +891,7 @@ int main()
         
     }
 
-    //cleanUp();
+    cleanUp();
 
     return 0;
 }

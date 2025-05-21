@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/testMap.json
+/testMap.csv
+/terminal_adventure.png
+/terminal adventure.tsx
+/map1.tmx

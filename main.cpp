@@ -51,12 +51,19 @@ const string gem = "\u1f48e";
 const string dagger = "\u1f5e1";
 const string castle = "\u1f3f0";
 
+//Forward declare structures.
+struct Tile;
+struct Entity;
+struct Stats;
+
+
 struct vec2d
 {
     int x = 0;
     int y = 0;
     int z = 0;
 };
+
 
 // the position of the window on the world map.
 vec2d windowPosition = {0,0,0};
@@ -225,25 +232,27 @@ Direction direction;
 Color textColor;
 
 char world[mapSize.x * mapSize.y];
-char window[windowSize.x * windowSize.y];  
+char window[windowSize.x * windowSize.y]; 
+
+struct Stats
+{
+    
+};
 
 struct Entity
 {
     string firstName = "none";
     string lastName = "none";
-    string shipName = "none";
-    string description = "No description";
+    string type = "none";
     char icon = 0;
     bool isAlive = true;
     ActionState actionState = idle;
     vec2d mapPosition;
-    int age = 0;
-    int turns = 0;
+    Tile** map = nullptr;
 };
 
 struct Tile
 {
-
     vec2d mapPosition;
     int absolutePosiiton = 0;
     string name = "none";
@@ -254,15 +263,26 @@ struct Tile
     char graphic = 65;
     bool isPassible = true;
     Color color;
-    char* map; //map that the tile occupies.
+    Tile** map = nullptr; //map that the tile occupies.
     vector<Entity*>entities;
 };
 
 // This will hold a pointer to the current map being used.
-Tile** currentMap = nullptr;
 
 Tile* overWorldMap[mapSize.x * mapSize.y];
 Tile* iceWorldMap[mapSize.x  * mapSize.y];
+Tile** currentMap = nullptr;
+
+static void makeTestEntities(int quantity, int x, int y)
+{
+    int spot = getAbsolutePosition({x,y,0});
+    for (int x = 0; x < quantity; x++)
+    {
+        Entity* entity = new Entity;
+        entity->firstName = generateNpcName();
+        currentMap[spot]->entities.push_back(entity);
+    }
+}
 
 char overWorldMapData[mapSize.x * mapSize.y];
 
@@ -417,11 +437,12 @@ static void populateOverWorldPlaces()
         place->mapPosition = spot;
         place->graphic = town;
         place->absolutePosiiton = getAbsolutePosition(place->mapPosition);
-
+        place->map = currentMap;
         delete overWorldMap[place->absolutePosiiton];
 
         overWorldMap[place->absolutePosiiton] = place;
-
+        //add some entities to towns.
+        makeTestEntities(5,spot.x,spot.y);
 
     }
 }
@@ -466,10 +487,10 @@ static void drawScreen()
     if (printDebugData)
     {
         vec2d temp = addVec2d(windowPosition,playerWindowPosition);
-        cout << "Player xy: " << playerWindowPosition.x << ", " << playerWindowPosition.y << endl;
+        cout << "Player xy: " << playerWindowPosition.x + windowPosition.x<< ", " << playerWindowPosition.y + windowPosition.y << endl;
         cout << "Window xy: " << windowPosition.x << ", " << windowPosition.y << endl;
-        cout << "plyrABS  : "   << getAbsolutePosition(temp) << endl;
-        cout << "windwABS : "  << getAbsolutePosition(windowPosition) << endl;
+        cout << "playerABS: " << getAbsolutePosition(temp) << endl;
+        cout << "windowABS: " << getAbsolutePosition(windowPosition) << endl;
     }
     
 }
@@ -563,7 +584,7 @@ static void loadWorld(string type)
                 tile->isPassible = false;
                 tile->color = blue;
                 tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
-                
+                tile->map = currentMap;
                 overWorldMap[tile->absolutePosiiton] = tile;
             }
 
@@ -581,6 +602,7 @@ static void loadWorld(string type)
                 tile->isPassible = true;
                 tile->color = green;
                 tile->continentName = worldName;
+                tile->map = currentMap;
                 
                 // Make grass 1 of 3 different graphics.
                 char grassIcon = 0;
@@ -621,6 +643,7 @@ static void loadWorld(string type)
     tile->color = red;
     tile->absolutePosiiton = getAbsolutePosition(tile->mapPosition);
     overWorldMap[tile->absolutePosiiton] = tile; 
+    tile->map = currentMap;
     
     // Put in all the special places on the overworld.
     populateOverWorldPlaces();
@@ -755,6 +778,20 @@ static void moveMenu()
         cout << "Name: "      << currentMap[tempPlayerPos]->name << endl;
         cout << "Desc: "      << currentMap[tempPlayerPos]->description << endl;
         cout << "Turn#: "     << globalturns << endl;
+        cout << "Entities on tile:" << endl;
+                
+        if (currentMap[tempPlayerPos]->entities.empty() == false)
+        {
+            for (Entity* entity: currentMap[tempPlayerPos]->entities)
+            {
+                std::cout << "Name: " << entity->firstName << " of " 
+                << currentMap[tempPlayerPos]->name << " " << currentMap[tempPlayerPos]->type 
+                << std::endl;
+            }
+        }
+       else
+         cout << "None." << endl;
+        
         
     }
     
@@ -855,6 +892,8 @@ static void cleanUp()
 
 int main()
 {
+    currentMap = overWorldMap;
+    
     // Randomize the randomizer
     randomSeed = static_cast<unsigned int>(time(nullptr));
     srand(seed);
@@ -867,7 +906,11 @@ int main()
     
     //ice world test map, for testing map switch.
     loadIceWorld();
-
+    
+    //Point to the overworld to start
+    
+    makeTestEntities(5,16,16);
+    
     // Load in some specific tiles.
     //populatePlaces();
 
@@ -877,9 +920,6 @@ int main()
     // Player creation.
     //playerCreation();
 
-   // currentMap = the overworld to start
-    currentMap = overWorldMap;
-    
     while (isRunning)
     {
         //system(OS_CLEAR);

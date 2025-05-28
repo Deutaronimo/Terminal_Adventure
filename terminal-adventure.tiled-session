@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "map1.tmx",
+    "activeFile": "",
     "expandedProjectPaths": [
         "."
     ],
@@ -12,7 +12,7 @@
             "scale": 0.5807617187499999,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1233.724567008576,
+                "x": 941.0055490163109,
                 "y": 890.2101900117707
             }
         },
@@ -26,6 +26,7 @@
     "map.height": 64,
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "tmx",
+    "map.orientation": "2",
     "map.width": 64,
     "openFiles": [
         "terminal adventure.tsx",
